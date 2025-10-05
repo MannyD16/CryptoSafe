@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CryptoSafe — File Encryption Demo</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="wrap">
+    <h1>CryptoSafe</h1>
+    <p class="subtitle">Encrypt/decrypt files in-browser. Save the key after encrypting.</p>
+
+    <div class="card">
+      <h2>Encrypt a file</h2>
+      <form id="enc-form">
+        <input type="file" name="file" required>
+        <button type="submit">Encrypt</button>
+      </form>
+      <div id="enc-out" class="result"></div>
+    </div>
+
+    <div class="card">
+      <h2>Decrypt a file</h2>
+      <form id="dec-form">
+        <input type="file" name="file" required>
+        <input type="text" name="key" placeholder="Paste key from encryption step" required>
+        <button type="submit">Decrypt</button>
+      </form>
+      <div id="dec-out" class="result"></div>
+    </div>
+
+    <footer><small>Built by Manuel Diaz — MVP demo</small></footer>
+  </div>
+
+  <script>
+    const encForm = document.getElementById('enc-form');
+    const decForm = document.getElementById('dec-form');
+    const encOut  = document.getElementById('enc-out');
+    const decOut  = document.getElementById('dec-out');
+
+    encForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      encOut.textContent = 'Encrypting...';
+      const fd = new FormData(encForm);
+      const r = await fetch('/api/encrypt', { method:'POST', body: fd });
+      const j = await r.json();
+      if(!r.ok){ encOut.textContent = j.error || 'Failed.'; return; }
+      encOut.innerHTML = `
+        <p><strong>Key:</strong> <code>${j.key}</code></p>
+        <a href="${j.download}">Download Encrypted File</a>
+        <p class="tip">Save the key safely. You need it to decrypt.</p>`;
+    });
+
+    decForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      decOut.textContent = 'Decrypting...';
+      const fd = new FormData(decForm);
+      const r = await fetch('/api/decrypt', { method:'POST', body: fd });
+      const j = await r.json();
+      if(!r.ok){ decOut.textContent = j.error || 'Failed.'; return; }
+      decOut.innerHTML = `<a href="${j.download}">Download Decrypted File</a>`;
+    });
+  </script>
+</body>
+</html>
